@@ -79,12 +79,14 @@ const eventResponse = await createEvent();
 if (eventResponse.event) {
     const { name, id } = eventResponse.event;
     console.log(`New event "${name}" (id: ${id}) created.`);
-//if errors:
+    //if errors:
 } else {
     const { code, message, validation_errors } = eventResponse;
     console.error(`Error. ${message}`);
-    Object.values(validation_errors).forEach(err => {
-        console.error(`----${err}`);
-    });
+    if (validation_errors) {
+        Object.values(validation_errors).forEach(err => {
+            console.error(`----${err}`);
+        });
+    }
 }
 
