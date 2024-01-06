@@ -55,3 +55,51 @@ export async function updatePerson(personData, clientConfig) {
         }
     }
 }
+
+/**
+ * Delete Person record, per https://nationbuilder.com/people_api
+ *   DELETE /api/v1/people/:id
+ * 
+ * @param {number} personId - id of the person to delete. Normally selected by user. Here just a static test value.
+ * @param {object} clientConfig - client-specific config info
+ * @returns {string} - Success or failure message 
+ */
+export async function deletePerson(personId, clientConfig) {
+    const { accessToken, nationSlug } = clientConfig;
+    const baseUrl = `https://${nationSlug}.nationbuilder.com`
+    const url = `${baseUrl}/api/v1/people/${personId}?access_token=${accessToken}`;
+    const fetchOptions = {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+    };
+
+    let output = '';
+
+    try {
+        const response = await fetch(url, fetchOptions);
+        //if successful:
+        if (response.status === 204) {
+            console.log(`Person ${personId} has been successfully deleted.`);
+            output = `Person ${personId} has been successfully deleted.`;
+        //if errors:
+        } else {
+            // console.log('personResponse:', personResponse)
+            const { code, message, validation_errors } = response;
+            console.error(`Error. ${message}`);
+            output = output + `Error. ${message}`;
+            output = output + `<ul>`;
+            if (validation_errors) {
+                Object.values(validation_errors).forEach(err => {
+                    console.error(`----${err}`);
+                    output = output + `<li>${err}</li>`;
+                });
+            }
+            output = output + `</ul>`;
+        }
+    } catch (err) {
+        if (err) {
+            console.error(err);
+        }
+    }
+    return output;
+}

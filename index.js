@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
 import { getEvent, updateEvent } from './functions/edit_event.js';
-import { getPerson, updatePerson } from './functions/edit_person.js';
+import { getPerson, updatePerson, deletePerson } from './functions/edit_person.js';
 
 const app = express();
 app.use(express.urlencoded({
@@ -61,7 +61,7 @@ app.get('/event/:event_id', async (req, res) => {
         .buttons{text-align: center;}
         button{font-size: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #ccc;}
         button[type="submit"]{background-color: green;color: white;}
-        button:hover{background-color: #ccc;cursor:pointer;}
+        button:hover{background-color: #ccc; color: black; cursor:pointer;}
 
         </style>
         <div class='container'>
@@ -269,6 +269,7 @@ app.post('/event/:event_id', async (req, res) => {
 
 app.get('/person/:person_id', async (req, res) => {
     const person_id = req.params.person_id;
+    
     const personData = await getPerson(person_id, clientConfig);
     console.log(personData)                                      //debug
 
@@ -302,7 +303,7 @@ app.get('/person/:person_id', async (req, res) => {
         button{font-size: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #ccc;}
         button[type="submit"]{background-color: green;color: white;}
         button[type="delete"]{background-color: firebrick;color: white;}
-        button:hover{background-color: #ccc;cursor:pointer;}
+        button:hover{background-color: #ccc; color: black; cursor:pointer;}
 
         </style>
         <div class='container'>
@@ -382,9 +383,11 @@ app.get('/person/:person_id', async (req, res) => {
             <div class="buttons">
                 <button type="submit" value="Submit">Update</button>
                 <button type="reset" value="Reset">Reset</button>
-                <button type="delete" value="Delete">Delete</button>
             </div>
         </form>
+        <div class="buttons">
+            <a href="delete"><button type="delete" value="Delete">Delete</button></a>
+        </div>
         </button>
             </div>
         </form>
@@ -445,6 +448,16 @@ app.post('/person/:person_id', async (req, res) => {
     res.send(output);
 });
 
+
+
+app.get('/person/:person_id/delete', async (req, res) => {
+    const person_id = req.params.person_id;
+
+    const personResponse = await deletePerson(person_id, clientConfig)
+
+    res.send(personResponse);
+
+});
 
 
 
