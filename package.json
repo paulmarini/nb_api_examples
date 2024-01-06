@@ -8,7 +8,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "create_event": "node functions/create_event.js"
+    "create_event": "node functions/create_event.js",
+    "create_person": "node functions/create_person.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulmarini/nb_api_examples.git"
   },
   "author": "Paul Marini",
   "license": "ISC",
