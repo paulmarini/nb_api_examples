@@ -3,6 +3,7 @@ dotenv.config();
 import express from 'express';
 import { getEvent, updateEvent } from './functions/edit_event.js';
 import { getPerson, updatePerson, deletePerson } from './functions/edit_person.js';
+import { createPerson } from './functions/create_person.js';
 
 const app = express();
 app.use(express.urlencoded({
@@ -14,14 +15,14 @@ const port = process.env.PORT || 3000;
 const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
     nationSlug: 'americansforsafeaccess',
-    siteSlug: 'americansforsafeaccess',
+    siteSlug: 'api_test_site',
 }
 
 app.get('/', (req, res) => {
     res.send('<h1>OK</h1>')
 })
 
-//SHOW EVENT
+//UPDATE EVENT - GET
 app.get('/event/:event_id', async (req, res) => {
 // 1563 is a test event you can use
     const event_id = req.params.event_id;
@@ -197,7 +198,7 @@ app.get('/event/:event_id', async (req, res) => {
     `)
 })
 
-//UPDATE EVENT
+//UPDATE EVENT - POST
 app.post('/event/:event_id', async (req, res) => {
 
     const eventData = {
@@ -266,7 +267,160 @@ app.post('/event/:event_id', async (req, res) => {
 });
 
 
-//SHOW PERSON
+//CREATE PERSON - GET
+app.get('/person', async (req, res) => {
+    res.send(`
+        <style>
+        h1{ text-align: center;}
+        .container{margin: auto; padding: 2rem; width: 85vw; max-width: 1200px;}
+        fieldset{display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; border: 1px solid #ccc; padding: 1rem; border-radius: 1rem;}
+        label{ font-weight: bold; display: block; }
+        label:has(+ input[type="checkbox"]){display: inline;}
+        input, textarea, select{ margin-bottom: 10px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; }
+        .formRow{ min-width: 300px; max-width: 500px;}
+        .formRow:last-child{ max-width: unset;}
+        textarea{ width: 100%; height: 5rem; }
+        .buttons{text-align: center;}
+        button{font-size: 1rem; padding: 1rem 2rem; border-radius: 1rem; border: 1px solid #ccc;}
+        button[type="submit"]{background-color: green;color: white;}
+        button[type="delete"]{background-color: firebrick;color: white;}
+        button:hover{background-color: #ccc; color: black; cursor:pointer;}
+
+        </style>
+        <div class='container'>
+        <h1>Create New Person</h1>
+        <form action='' id="personForm" method='post'>
+            <fieldset>
+                <legend>Basic Info</legend>
+                <div class='formRow'>
+                    <label>First Name</label>
+                    <input type='text' name="first_name" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Last Name</label>
+                    <input type='text' name="last_name" value="" />
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Contact Info</legend>
+                <div class='formRow'>
+                    <label>Do Not Call</label>
+                    <input type='checkbox' name="do_not_call" value="true" />
+                </div>
+                <div class='formRow'>
+                    <label>Do Not Contact?</label>
+                    <input type='checkbox' name="do_not_contact" value="true" />
+                </div>
+                <div class='formRow'>
+                    <label>Home Phone</label>
+                    <input type='tel' name="phone" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Mobile Phone</label>
+                    <input type='tel' name="mobile" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Mobile Phone Opt-In?</label>
+                    <input type='checkbox' name="mobile_opt_in" value="true" />
+                </div>
+                <div class='formRow'>
+                    <label>Email</label>
+                    <input type='text' name="email" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Email Opt-In?</label>
+                    <input type='checkbox' name="email_opt_in" value="true" />
+                </div>
+            </fieldset>
+            
+
+
+            <fieldset>
+                <legend>Registered Address</legend>
+                <div class='formRow'>
+                    <label>Street Address 1</label>
+                    <input type='text' name="registered_address_address1" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Street Address 2</label>
+                    <input type='text' name="registered_address_address2" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>City</label>
+                    <input type='text' name="registered_address_city" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>State</label>
+                    <input type='text' name="registered_address_state" value="" />
+                </div>
+                <div class='formRow'>
+                    <label>Zip</label>
+                    <input type='text' name="registered_address_zip" value="" />
+                </div>
+            </fieldset>
+            <div class="buttons">
+                <button type="submit" value="Submit">Create</button>
+                <button type="reset" value="Reset">Reset</button>
+            </div>
+        </form>
+        </div>
+    `)
+})
+
+//CREATE PERSON - POST
+app.post('/person', async (req, res) => {
+
+    const personData = {
+        person: {
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            do_not_call: req.body.do_not_call ? true : false,
+            do_not_contact: req.body.do_not_contact ? true : false,
+            phone: req.body.phone,
+            mobile: req.body.mobile,
+            mobile_opt_in: req.body.mobile_opt_in ? true : false,
+            email: req.body.email,
+            email_opt_in: req.body.email_opt_in ? true : false,
+            registered_address: {
+                address1: req.body.registered_address_address1,
+                address2: req.body.registered_address_address2,
+                city: req.body.registered_address_city,
+                state: req.body.registered_address_state,
+                zip: req.body.registered_address_zip,
+            }
+        }
+    };
+    console.log('personData:', personData)                //debug
+
+    const personResponse = await createPerson(personData, clientConfig)
+    let output = '';
+
+    //if successful:
+    if (personResponse.person) {
+        const { full_name, id } = personResponse.person;
+        console.log(`${full_name} (id: ${id}) has been successfully created.`);
+        output = output + `${full_name} (id: ${id}) has been successfully created.`;
+        //if errors:
+    } else {
+        // console.log('personResponse:', personResponse)
+        const { code, message, validation_errors } = personResponse;
+        console.error(`Error. ${message}`);
+        output = output + `Error. ${message}`;
+        output = output + `<ul>`;
+        if (validation_errors) {
+            Object.values(validation_errors).forEach(err => {
+                console.error(`----${err}`);
+                output = output + `<li>${err}</li>`;
+            });
+        }
+        output = output + `</ul>`;
+    }
+
+    res.send(output);
+});
+
+//UPDATE PERSON - GET
 app.get('/person/:person_id', async (req, res) => {
     const person_id = req.params.person_id;
     
@@ -388,14 +542,11 @@ app.get('/person/:person_id', async (req, res) => {
         <div class="buttons">
             <a href="delete"><button type="delete" value="Delete">Delete</button></a>
         </div>
-        </button>
-            </div>
-        </form>
         </div>
     `)
 })
 
-//UPDATE PERSON
+//UPDATE PERSON - POST
 app.post('/person/:person_id', async (req, res) => {
 
     const personData = {
@@ -448,7 +599,7 @@ app.post('/person/:person_id', async (req, res) => {
     res.send(output);
 });
 
-//DELETE PERSON
+//DELETE PERSON - 
 app.get('/person/:person_id/delete', async (req, res) => {
     const person_id = req.params.person_id;
 

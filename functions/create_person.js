@@ -32,7 +32,7 @@ const personData = {
  * @param {object} clientConfig - client-specific config info
  * @returns {object} response.json() - The person object on success, an error object on failure
  */
-async function createPerson(personData, clientConfig) {
+export async function createPerson(personData, clientConfig) {
     const { accessToken, nationSlug } = clientConfig;
     const baseUrl = `https://${nationSlug}.nationbuilder.com`
     const url = `${baseUrl}/api/v1/people?access_token=${accessToken}`;
