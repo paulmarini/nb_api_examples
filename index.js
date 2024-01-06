@@ -21,9 +21,9 @@ app.get('/', (req, res) => {
     res.send('<h1>OK</h1>')
 })
 
-
-// 1563 is a test event you can use
+//SHOW EVENT
 app.get('/event/:event_id', async (req, res) => {
+// 1563 is a test event you can use
     const event_id = req.params.event_id;
     const eventData = await getEvent(event_id, clientConfig);
     // console.log(eventData)                                      //debug
@@ -197,7 +197,7 @@ app.get('/event/:event_id', async (req, res) => {
     `)
 })
 
-
+//UPDATE EVENT
 app.post('/event/:event_id', async (req, res) => {
 
     const eventData = {
@@ -266,7 +266,7 @@ app.post('/event/:event_id', async (req, res) => {
 });
 
 
-
+//SHOW PERSON
 app.get('/person/:person_id', async (req, res) => {
     const person_id = req.params.person_id;
     
@@ -395,7 +395,7 @@ app.get('/person/:person_id', async (req, res) => {
     `)
 })
 
-
+//UPDATE PERSON
 app.post('/person/:person_id', async (req, res) => {
 
     const personData = {
@@ -448,8 +448,7 @@ app.post('/person/:person_id', async (req, res) => {
     res.send(output);
 });
 
-
-
+//DELETE PERSON
 app.get('/person/:person_id/delete', async (req, res) => {
     const person_id = req.params.person_id;
 
@@ -458,7 +457,6 @@ app.get('/person/:person_id/delete', async (req, res) => {
     res.send(personResponse);
 
 });
-
 
 
 
