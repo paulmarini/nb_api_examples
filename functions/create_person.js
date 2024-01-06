@@ -5,7 +5,6 @@ dotenv.config();
 const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
     nationSlug: 'americansforsafeaccess',
-    siteSlug: 'americansforsafeaccess',
 }
 
 const personData = {
