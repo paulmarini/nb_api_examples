@@ -6,7 +6,6 @@ const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
     nationSlug: 'americansforsafeaccess',
     siteSlug: 'americansforsafeaccess',
-    baseUrl: `https://${nationSlug}.nationbuilder.com/`
 }
 
 
@@ -74,7 +73,7 @@ async function createEvent(eventData, clientConfig) {
     }
 }
 
-const eventResponse = await createEvent();
+const eventResponse = await createEvent(eventData, clientConfig);
 //if successful:
 if (eventResponse.event) {
     const { name, id } = eventResponse.event;
