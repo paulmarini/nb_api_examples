@@ -4,7 +4,7 @@
  * Get Event data, per https://nationbuilder.com/events_api
  *   GET /api/v1/sites/:site_slug/pages/events/:id
  * 
- * @param {number} eventId - id of the event to show and edit. Normally selected by user. Here just a static test value.
+ * @param {number} eventId - id of the event to show and edit. 
  * @param {object} clientConfig - client-specific config info
  * @returns {object} response.json() - The event object on success, an error object on failure
  */

@@ -4,7 +4,7 @@
  * Get Person data, per https://nationbuilder.com/people_api
  *   GET /api/v1/people/:id
  * 
- * @param {number} eventId - id of the person to show and edit. Normally selected by user. Here just a static test value.
+ * @param {number} eventId - id of the person to show and edit.
  * @param {object} clientConfig - client-specific config info
  * @returns {object} response.json() - The person object on success, an error object on failure
  */
