@@ -1,9 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
-import { getEvent, updateEvent } from './functions/edit_event.js';
-import { getPerson, updatePerson, deletePerson } from './functions/edit_person.js';
-import { createPerson } from './functions/create_person.js';
+
+import nb_call from './functions/nb_call.js';
 
 const app = express();
 app.use(express.urlencoded({
@@ -15,7 +14,7 @@ const port = process.env.PORT || 3000;
 const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
     nationSlug: 'americansforsafeaccess',
-    siteSlug: 'api_test_site',
+    siteSlug: 'apitestsite',
 }
 
 app.get('/', (req, res) => {
@@ -24,31 +23,39 @@ app.get('/', (req, res) => {
 
 //UPDATE EVENT - GET
 app.get('/event/:event_id', async (req, res) => {
-// 1563 is a test event you can use
+    // 1563 is a test event you can use
     const event_id = req.params.event_id;
-    const eventData = await getEvent(event_id, clientConfig);
-    // console.log(eventData)                                      //debug
 
-    const {
-        id,
-        status,
-        slug,
-        name,
-        headline,
-        intro,
-        start_time,
-        end_time,
-        contact,
-        rsvp_form,
-        venue,
-        capacity,
-    } = eventData.event;
+    let output = '';
+    const fetchResponse = await nb_call(clientConfig, 'GET', '/api/v1/sites/:site_slug/pages/events/:id', null, event_id);
+    // console.log('fetchResponse', fetchResponse)                      //debug
 
-    const start = start_time.slice(0, 16)
-    const end = end_time.slice(0, 16)
-    const tz_offset = start_time.slice(19, 25)
+    const successCodes = [200];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        const responseData = await fetchResponse.json();
+        console.log(responseData)                                      //debug
 
-    res.send(`
+        const {
+            id,
+            status,
+            slug,
+            name,
+            headline,
+            intro,
+            start_time,
+            end_time,
+            contact,
+            rsvp_form,
+            venue,
+            capacity,
+        } = responseData.event;
+
+        const start = start_time.slice(0, 16);
+        const end = end_time.slice(0, 16);
+        const tz_offset = start_time.slice(19, 25);
+
+        output = `
         <style>
         h1{ text-align: center;}
         .container{margin: auto; padding: 2rem; width: 85vw; max-width: 1200px;}
@@ -195,11 +202,40 @@ app.get('/event/:event_id', async (req, res) => {
             </div>
         </form>
         </div>
-    `)
+    `;
+
+    } else {
+        //error 
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
+        }
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
+    }
+    res.send(output);
 })
 
 //UPDATE EVENT - POST
 app.post('/event/:event_id', async (req, res) => {
+    let output = '';
 
     const eventData = {
         event: {
@@ -239,28 +275,41 @@ app.post('/event/:event_id', async (req, res) => {
     };
     // console.log('eventData:', eventData)                //debug
 
-    const eventResponse = await updateEvent(eventData, clientConfig)
-    let output = '';
+    const fetchResponse = await nb_call(clientConfig, 'PUT', '/api/v1/sites/:site_slug/pages/events/:id', eventData, req.body.id)
 
-    //if successful:
-    if (eventResponse.event) {
-        const { name, id } = eventResponse.event;
-        console.log(`Event "${name}" (id: ${id}) has been successfully updated.`);
-        output = output + `Event "${name}" (id: ${id}) has been successfully updated.`;
-        //if errors:
+    const successCodes = [200, 201, 204];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        const responseData = await fetchResponse.json();
+        console.log(responseData)                                      //debug
+        const { name, id } = responseData.event;
+        output = `Event "${name}" (id: ${id}) has been successfully updated.`;
+        console.log(output);
     } else {
-        // console.log('eventResponse:', eventResponse)
-        const { code, message, validation_errors } = eventResponse;
-        console.error(`Error. ${message}`);
-        output = output + `Error. ${message}`;
-        output = output + `<ul>`;
-        if (validation_errors) {
-            Object.values(validation_errors).forEach(err => {
-                console.error(`----${err}`);
-                output = output + `<li>${err}</li>`;
-            });
+        //error
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
         }
-        output = output + `</ul>`;
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
     }
 
     res.send(output);
@@ -268,8 +317,9 @@ app.post('/event/:event_id', async (req, res) => {
 
 
 //CREATE PERSON - GET
-app.get('/person', async (req, res) => {
-    res.send(`
+app.get('/person/new', async (req, res) => {
+    let output = '';
+    output = `
         <style>
         h1{ text-align: center;}
         .container{margin: auto; padding: 2rem; width: 85vw; max-width: 1200px;}
@@ -365,11 +415,13 @@ app.get('/person', async (req, res) => {
             </div>
         </form>
         </div>
-    `)
+    `;
+    res.send(output);
 })
 
 //CREATE PERSON - POST
-app.post('/person', async (req, res) => {
+app.post('/person/new', async (req, res) => {
+    let output = '';
 
     const personData = {
         person: {
@@ -391,30 +443,43 @@ app.post('/person', async (req, res) => {
             }
         }
     };
-    console.log('personData:', personData)                //debug
+    // console.log('personData:', personData)                //debug
 
-    const personResponse = await createPerson(personData, clientConfig)
-    let output = '';
+    const fetchResponse = await nb_call(clientConfig, 'POST', '/api/v1/people', personData, null);
 
-    //if successful:
-    if (personResponse.person) {
-        const { full_name, id } = personResponse.person;
-        console.log(`${full_name} (id: ${id}) has been successfully created.`);
-        output = output + `${full_name} (id: ${id}) has been successfully created.`;
-        //if errors:
+    const successCodes = [200, 201, 204];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        const responseData = await fetchResponse.json();
+        console.log(responseData)                                      //debug
+        const { full_name, id } = responseData.person;
+        output = `${full_name} (id: ${id}) has been successfully created.`;
+        console.log(output);
     } else {
-        // console.log('personResponse:', personResponse)
-        const { code, message, validation_errors } = personResponse;
-        console.error(`Error. ${message}`);
-        output = output + `Error. ${message}`;
-        output = output + `<ul>`;
-        if (validation_errors) {
-            Object.values(validation_errors).forEach(err => {
-                console.error(`----${err}`);
-                output = output + `<li>${err}</li>`;
-            });
+        //error
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
         }
-        output = output + `</ul>`;
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
     }
 
     res.send(output);
@@ -423,26 +488,33 @@ app.post('/person', async (req, res) => {
 //UPDATE PERSON - GET
 app.get('/person/:person_id', async (req, res) => {
     const person_id = req.params.person_id;
-    
-    const personData = await getPerson(person_id, clientConfig);
-    console.log(personData)                                      //debug
 
-    const {
-        id,
-        first_name,
-        last_name,
-        do_not_call,
-        do_not_contact,
-        phone,
-        mobile,
-        mobile_opt_in,
-        email,
-        email_opt_in,
-        registered_address
-    } = personData.person;
+    let output = '';
+
+    const fetchResponse = await nb_call(clientConfig, 'GET', '/api/v1/people/:id', null, person_id);
+
+    const successCodes = [200];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        const responseData = await fetchResponse.json();
+        console.log(responseData)                                      //debug
+
+        const {
+            id,
+            first_name,
+            last_name,
+            do_not_call,
+            do_not_contact,
+            phone,
+            mobile,
+            mobile_opt_in,
+            email,
+            email_opt_in,
+            registered_address
+        } = responseData.person;
 
 
-    res.send(`
+        output = `
         <style>
         h1{ text-align: center;}
         .container{margin: auto; padding: 2rem; width: 85vw; max-width: 1200px;}
@@ -540,14 +612,43 @@ app.get('/person/:person_id', async (req, res) => {
             </div>
         </form>
         <div class="buttons">
-            <a href="delete"><button type="delete" value="Delete">Delete</button></a>
+            <a href="/person/${id}/delete"><button type="delete" value="Delete">Delete</button></a>
         </div>
         </div>
-    `)
+    `;
+
+    } else {
+        //error 
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
+        }
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
+    }
+    res.send(output);
 })
 
 //UPDATE PERSON - POST
 app.post('/person/:person_id', async (req, res) => {
+    let output = '';
 
     const personData = {
         person: {
@@ -570,30 +671,45 @@ app.post('/person/:person_id', async (req, res) => {
             }
         }
     };
-    console.log('personData:', personData)                //debug
+    // console.log('personData:', personData)                //debug
 
-    const personResponse = await updatePerson(personData, clientConfig)
-    let output = '';
 
-    //if successful:
-    if (personResponse.person) {
-        const { full_name, id } = personResponse.person;
-        console.log(`${full_name} (id: ${id}) has been successfully updated.`);
-        output = output + `${full_name} (id: ${id}) has been successfully updated.`;
+    const fetchResponse = await nb_call(clientConfig, 'PUT', '/api/v1/people/:id', personData, req.body.id)
+
+    const successCodes = [200, 201, 204];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        const responseData = await fetchResponse.json();
+        console.log(responseData)                                      //debug
+        const { full_name, id } = responseData.person;
+        output = `${full_name} (id: ${id}) has been successfully updated.`;
+        console.log(output);
         //if errors:
     } else {
-        // console.log('personResponse:', personResponse)
-        const { code, message, validation_errors } = personResponse;
-        console.error(`Error. ${message}`);
-        output = output + `Error. ${message}`;
-        output = output + `<ul>`;
-        if (validation_errors) {
-            Object.values(validation_errors).forEach(err => {
-                console.error(`----${err}`);
-                output = output + `<li>${err}</li>`;
-            });
+        //error
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
         }
-        output = output + `</ul>`;
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
     }
 
     res.send(output);
@@ -603,13 +719,52 @@ app.post('/person/:person_id', async (req, res) => {
 app.get('/person/:person_id/delete', async (req, res) => {
     const person_id = req.params.person_id;
 
-    const personResponse = await deletePerson(person_id, clientConfig)
+    let output = '';
 
-    res.send(personResponse);
+    const fetchResponse = await nb_call(clientConfig, 'DELETE', '/api/v1/people/:id', null, person_id)
 
+    const successCodes = [200, 201, 204];
+    if (successCodes.includes(fetchResponse.status)) {
+        //success
+        if (fetchResponse.status === 204) {
+            output = `Person ${person_id} has been successfully deleted.`;
+            console.log(output)
+            res.send(output);
+            return;
+        }
+        const responseData = await fetchResponse.json();
+
+        output = responseData;
+
+    } else {
+        //error
+        if (fetchResponse.status === 404) {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+            res.send(output);
+            return
+        }
+        const responseData = await fetchResponse.json();
+        if (responseData.message) {
+            const { code, message, validation_errors } = responseData;
+            output = `Error. ${message}`;
+            console.error(`Error. ${message}`);
+            if (validation_errors) {
+                output = output + '<ul>';
+                Object.values(validation_errors).forEach(err => {
+                    output = output + `<li>${err}</li>`;
+                    console.error(`----${err}`);
+                });
+                output = output + '</ul>';
+            }
+        } else {
+            output = `Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`
+            console.error(output);
+        }
+    }
+
+    res.send(output);
 });
-
-
 
 
 //Start server
