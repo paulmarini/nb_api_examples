@@ -9,7 +9,9 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "create_event": "node functions/create_event.js",
-    "create_person": "node functions/create_person.js"
+    "create_person": "node functions/create_person.js",
+    "create_survey": "node functions/create_survey.js",
+    "record_survey_responses": "node functions/record_survey_responses.js"
   },
   "repository": {
     "type": "git",

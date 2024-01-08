@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import nb_call from './nb_call.js';
 
 const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
@@ -52,48 +53,26 @@ const surveyData = {
     }
 }
 
-/**
- * Create a new Survey, per https://nationbuilder.com/surveys_api
- *   POST /api/v1/sites/:site_slug/pages/surveys
- * 
- * @param {object} surveyData - Normally user data. In this case test data.
- * @param {object} clientConfig - client-specific config info
- * @returns {object} response.json() - The survey object on success, an error object on failure
- */
-export async function createSurvey(surveyData, clientConfig) {
-    const { accessToken, nationSlug, siteSlug } = clientConfig;
-    const baseUrl = `https://${nationSlug}.nationbuilder.com`
-    const url = `${baseUrl}/api/v1/sites/${siteSlug}/pages/surveys?access_token=${accessToken}`;
-    const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(surveyData),
-    };
 
-    try {
-        const response = await fetch(url, fetchOptions);
-        return response.json();
-    } catch (err) {
-        if (err) {
-            console.error(err);
-        }
-    }
-}
+const fetchResponse = await nb_call(clientConfig, 'POST', '/api/v1/sites/:site_slug/pages/surveys', surveyData, null);
+const responseData = await fetchResponse.json();
 
-const surveyResponse = await createSurvey(surveyData, clientConfig);
-//if successful:
-if (surveyResponse.survey) {
-    const { name, id } = surveyResponse.survey;
+const successCodes = [200, 201];
+if (successCodes.includes(fetchResponse.status)) {
+    //success
+    const { name, id } = responseData.survey;
     console.log(`New survey "${name}" (id: ${id}) created.`);
-    //if errors:
 } else {
-    const { code, message, validation_errors } = surveyResponse;
-    console.error(`Error. ${message}`);
-    if (validation_errors) {
-        Object.values(validation_errors).forEach(err => {
-            console.error(`----${err}`);
-        });
+    //error 
+    if (responseData.message) {
+        const { code, message, validation_errors } = responseData;
+        console.error(`Error. ${message}`);
+        if (validation_errors) {
+            Object.values(validation_errors).forEach(err => {
+                console.error(`----${err}`);
+            });
+        }
+    } else {
+        console.error(`Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`);
     }
 }
-
-
