@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import nb_call from './nb_call.js';
 
 const clientConfig = {
     accessToken: process.env.NB_API_TOKEN,
     nationSlug: 'americansforsafeaccess',
-    siteSlug: 'americansforsafeaccess',
+    siteSlug: 'apitestsite',
 }
-
 
 const eventData = {
     "event": {
@@ -45,47 +45,25 @@ const eventData = {
 }
 
 
-/**
- * Create a new Event, per https://nationbuilder.com/events_api
- *   POST /api/v1/sites/:site_slug/pages/events
- * 
- * @param {object} eventData - Normally user data. In this case test data.
- * @param {object} clientConfig - client-specific config info
- * @returns {object} response.json() - The event object on success, an error object on failure
- */
-async function createEvent(eventData, clientConfig) {
-    const { accessToken, nationSlug, siteSlug } = clientConfig;
-    const baseUrl = `https://${nationSlug}.nationbuilder.com`
-    const url = `${baseUrl}/api/v1/sites/${siteSlug}/pages/events?access_token=${accessToken}`;
-    const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
-    };
+const fetchResponse = await nb_call(clientConfig, 'POST', '/api/v1/sites/:site_slug/pages/events', eventData, null);
+const responseData = await fetchResponse.json();
 
-    try {
-        const response = await fetch(url, fetchOptions);
-        return response.json();
-    } catch (err) {
-        if (err) {
-            console.error(err);
-        }
-    }
-}
-
-const eventResponse = await createEvent(eventData, clientConfig);
-//if successful:
-if (eventResponse.event) {
-    const { name, id } = eventResponse.event;
+const successCodes = [200, 201];
+if (successCodes.includes(fetchResponse.status)) {
+    //success
+    const { name, id } = responseData.event;
     console.log(`New event "${name}" (id: ${id}) created.`);
-    //if errors:
 } else {
-    const { code, message, validation_errors } = eventResponse;
-    console.error(`Error. ${message}`);
-    if (validation_errors) {
-        Object.values(validation_errors).forEach(err => {
-            console.error(`----${err}`);
-        });
+    //error 
+    if (responseData.message) {
+        const { code, message, validation_errors } = responseData;
+        console.error(`Error. ${message}`);
+        if (validation_errors) {
+            Object.values(validation_errors).forEach(err => {
+                console.error(`----${err}`);
+            });
+        }
+    } else {
+        console.error(`Error. Status: ${fetchResponse.status}. statusText: ${fetchResponse.statusText}`);
     }
 }
-
