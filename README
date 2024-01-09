@@ -1,0 +1,18 @@
+Simple proof-of-concept code to:
+
+    API Endpoint: Events
+        Create an event                                         (npm run create_event)
+        Make a form that allows others to update that event     (index.js at /event/:event_id)
+    API Endpoint: People
+        Create a person                                         (npm run create_person)
+        Update the person                                       (index.js at /person/:person_id)
+        Delete the person                                       (index.js at /person/:person_id/delete)
+    API Endpoint: Sites + People
+        Create a site with 3 basic pages                        (npm run create_basic_page)
+        Make a form that creates people                         (index.js at /person/new)
+        Display the people on the basic pages                   (added when the user is submitted)
+    API Endpoint: Surveys + Contact
+        Create a survey                                         (npm run create_survey)
+        Log a contact when someone answers a survey question    (npm run record_survey_responses)
+
+I didn't really do anything with the front-end, so it's pretty basic.  npm run start to spin up a dev server at :3000.
