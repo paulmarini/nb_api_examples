@@ -1,3 +1,4 @@
+//DEPRECATED
 // const eventId = 1563;
 
 /**
