@@ -19,8 +19,13 @@ export default async function nb_call(clientConfig, method, endpoint, data, id, 
     if (method === 'POST' || method === 'PUT') { fetchOptions.body = JSON.stringify(data); }
 
     const queryParams = new URLSearchParams({ ...params, access_token: accessToken });
+
     const baseUrl = `https://${nationSlug}.nationbuilder.com`
     const url = baseUrl + endpoint.replace(':site_slug', siteSlug).replace(':id', id) + `?${queryParams}`;
+
+    // console.log('fetchOptions: ', fetchOptions)         //debug
+    // console.log('url: ', url)                           //debug
+    // console.log('queryParams: ', queryParams)           //debug
 
     try {
         const response = await fetch(url, fetchOptions);
