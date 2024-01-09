@@ -11,6 +11,7 @@
     "create_event": "node functions/create_event.js",
     "create_person": "node functions/create_person.js",
     "create_survey": "node functions/create_survey.js",
+    "create_basic_page": "node functions/create_basic_page.js",
     "record_survey_responses": "node functions/record_survey_responses.js"
   },
   "repository": {
