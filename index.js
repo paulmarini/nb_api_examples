@@ -34,7 +34,7 @@ app.get('/event/:event_id', async (req, res) => {
     if (successCodes.includes(fetchResponse.status)) {
         //success
         const responseData = await fetchResponse.json();
-        console.log(responseData)                                      //debug
+        // console.log(responseData)                                      //debug
 
         const {
             id,
@@ -290,7 +290,7 @@ app.post('/event/:event_id', async (req, res) => {
     if (successCodes.includes(fetchResponse.status)) {
         //success
         const responseData = await fetchResponse.json();
-        console.log(responseData)                                      //debug
+        // console.log(responseData)                                      //debug
         const { name, id } = responseData.event;
         output = `Event "${name}" (id: ${id}) has been successfully updated.`;
         console.log(output);
@@ -461,7 +461,7 @@ app.post('/person/new', async (req, res) => {
     if (successCodes.includes(fetchResponse.status)) {
         //success
         const responseData = await fetchResponse.json();
-        console.log(responseData)                                      //debug
+        // console.log(responseData)                                      //debug
         const { full_name, id } = responseData.person;
         output = `${full_name} (id: ${id}) has been successfully created.`;
         console.log(output);
@@ -511,7 +511,7 @@ app.get('/person/:person_id', async (req, res) => {
     if (successCodes.includes(fetchResponse.status)) {
         //success
         const responseData = await fetchResponse.json();
-        console.log(responseData)                                      //debug
+        // console.log(responseData)                                      //debug
 
         const {
             id,
@@ -694,7 +694,7 @@ app.post('/person/:person_id', async (req, res) => {
     if (successCodes.includes(fetchResponse.status)) {
         //success
         const responseData = await fetchResponse.json();
-        console.log(responseData)                                      //debug
+        // console.log(responseData)                                      //debug
         const { full_name, id } = responseData.person;
         output = `${full_name} (id: ${id}) has been successfully updated.`;
         console.log(output);
@@ -816,11 +816,9 @@ async function addProfile(personData) {
             "content": pageData.content + profileCard
         }
     }
-        // content: pageData.content + profileCard
 
-    console.log('pageData:', pageData)
+    // console.log('pageData:', pageData)      //debug
     const fetchResponsePutProfile = await nb_call(clientConfig, 'PUT', '/api/v1/sites/:site_slug/pages/basic_pages/:id', newPageData, pageData.id)
-    console.log('fetchResponsePutProfile:', fetchResponsePutProfile)
     if (fetchResponsePutProfile.status !== 200) {
         console.error(`Error in addProfile (posting profile card). Status: ${fetchResponsePutProfile.status}. statusText: ${fetchResponsePutProfile.statusText}`);
         return;
