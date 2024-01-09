@@ -76,11 +76,20 @@ app.get('/event/:event_id', async (req, res) => {
         <h1>Update Event</h1>
         <form action='' id="eventForm" method='post'>
             <input type='hidden' name='id' value='${id}' />
-            <input type='hidden' name='status' value='${status}' />
             <input type='hidden' name='tz_offset' value='${tz_offset}' />
 
             <fieldset>
                 <legend>Basic Info</legend>
+                <div class='formRow'>
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="${status}">${status}</option>
+                        <hr />
+                        <option value="published">published</option>
+                        <option value="unlisted">unlisted</option>
+                        <option value="hidden">hidden</option>
+                    </select>
+                </div>
                 <div class='formRow'>
                     <label>Event Headline</label>
                     <input type='text' name="headline" value="${headline || ''}" />
