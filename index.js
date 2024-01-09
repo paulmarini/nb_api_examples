@@ -339,6 +339,7 @@ app.get('/person/new', async (req, res) => {
         </style>
         <div class='container'>
         <h1>Create New Person</h1>
+        <p>Users created here will have profiles added to <a href="https://apitestsite-americansforsafeaccess.nationbuilder.com/newuserprofiles" target="_blank">https://apitestsite-americansforsafeaccess.nationbuilder.com/newuserprofiles</a></p>
         <form action='' id="personForm" method='post'>
             <fieldset>
                 <legend>Basic Info</legend>
@@ -455,6 +456,10 @@ app.post('/person/new', async (req, res) => {
         const { full_name, id } = responseData.person;
         output = `${full_name} (id: ${id}) has been successfully created.`;
         console.log(output);
+
+        //add user's profile to profile page
+        await addProfile(personData)
+
     } else {
         //error
         if (fetchResponse.status === 404) {
@@ -766,6 +771,52 @@ app.get('/person/:person_id/delete', async (req, res) => {
     res.send(output);
 });
 
+/**
+ * Takes in supporter data, formats it and adds it to a page with slug 'newuserprofiles'
+ * Updating basic_page doesn't take partial updates, so we have to fetch the page first to update it.
+ * There doesn't seem to be a single page enpoint, so we have to fetch all pages and filter.
+ * 
+ * @param {object} personData 
+ * @returns null
+ */
+async function addProfile(personData) {
+    const { first_name, last_name, email, phone } = personData.person;
+    const profileCard = `
+        <!-- Profile Card -->
+        <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">${first_name} ${last_name}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">${email}</h6>
+            <p class="card-text">tel: ${phone}</p>
+        </div>
+        </div>
+        <!-- End Profile Card -->
+    `;
+
+
+    const fetchResponseListPages = await nb_call(clientConfig, 'GET', '/api/v1/sites/:site_slug/pages/basic_pages', null, null);
+    if (fetchResponseListPages.status !== 200) {
+        console.error(`Error in addProfile (getting pages list). Status: ${fetchResponseListPages.status}. statusText: ${fetchResponseListPages.statusText}`);
+        return;
+    }
+    const responseDataListPages = await fetchResponseListPages.json();
+
+    const pageData = responseDataListPages.results.find(page => page.slug === 'newuserprofiles');
+    const newPageData = {
+        "basic_page": { ...pageData,
+            "content": pageData.content + profileCard
+        }
+    }
+        // content: pageData.content + profileCard
+
+    console.log('pageData:', pageData)
+    const fetchResponsePutProfile = await nb_call(clientConfig, 'PUT', '/api/v1/sites/:site_slug/pages/basic_pages/:id', newPageData, pageData.id)
+    console.log('fetchResponsePutProfile:', fetchResponsePutProfile)
+    if (fetchResponsePutProfile.status !== 200) {
+        console.error(`Error in addProfile (posting profile card). Status: ${fetchResponsePutProfile.status}. statusText: ${fetchResponsePutProfile.statusText}`);
+        return;
+    }
+}
 
 //Start server
 app.listen(port, () => {
